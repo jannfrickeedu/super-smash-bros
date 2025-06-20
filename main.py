@@ -131,6 +131,7 @@ class Player:
             punch_velocity += 40
         else:
             raise ValueError("invalid direction")
+            #random test message
 
         if collisions:
             for i in collisions:
