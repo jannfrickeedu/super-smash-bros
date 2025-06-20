@@ -1,6 +1,8 @@
 import pygame
 import math
 
+SCREEN_WIDTH = 1280
+SCREEN_HEIGHT = 720
 GRAVITY = 3
 FRICTION_FLOOR = 10
 FRICTION_AIR = 0.3
@@ -81,52 +83,88 @@ class Player:
             self.jump()
         if keys[self.hit_key_left]:
             self.hit("left")
+            keys[self.hit_key_left] = False
         if keys[self.hit_key_right]:
             self.hit("right")
+            keys[self.hit_key_right] = False
 
     def jump(self):
         self.velocity.y = -40
         self.in_air = True
 
     def hit(self, direction):
-            if direction == "left":
-                self.punching_left = not self.punching_left
-            if direction == "right":
-                self.punching_right = not self.punching_right
+        if direction == "left":
+            self.punching_left = not self.punching_left
+        if direction == "right":
+            self.punching_right = not self.punching_right
 
 
-# Initialization
-pygame.init()
-SCREEN_WIDTH = 1280
-SCREEN_HEIGHT = 720
-screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-clock = pygame.time.Clock()
-running = True
+class Game:
+    def __init__(self) -> None:
+        self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+        self.clock = pygame.time.Clock()
+        self.running = True
+        self.keys = [False] * 2048
 
-# Player setup
-player1 = Player(100, 100, "red", pygame.K_a, pygame.K_d, pygame.K_w, pygame.K_e, pygame.K_q)
-player2 = Player(800, 100, "green", pygame.K_j, pygame.K_l, pygame.K_i, pygame.K_o, pygame.K_u)
-players = [player1, player2]
+        # Players setup
+        player1 = Player(100, 100, "red", pygame.K_a, pygame.K_d, pygame.K_w, pygame.K_e, pygame.K_q)
+        player2 = Player(800, 100, "green", pygame.K_j, pygame.K_l, pygame.K_i, pygame.K_o, pygame.K_u)
+        self.players = [player1, player2]
+
+        # Tilemap setup
+        tilemap = [
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        ]
+
+        self.tiles = generate_tiles(tilemap)
+
+    def poll_events(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                self.running = False
+
+            if event.type == pygame.KEYDOWN or event.type == pygame.KEYUP:
+                if event.key <= 2048:
+                    self.keys[event.key] = not self.keys[event.key]
+
+
+    def update(self):
+        self.delta_time = self.clock.tick(60)
+        for player in self.players:
+            player.check_input(self.keys)
+            player.update(self.tiles)
+
+    def draw(self):
+        self.screen.fill(0)
+
+        for player in self.players:
+            player.draw(self.screen)
+
+        for tile in self.tiles:
+            pygame.draw.rect(self.screen, (255, 255, 255), tile)
+
+        pygame.display.flip()
+
+    def start(self):
+        while self.running:
+            self.poll_events()
+            self.update()
+            self.draw()
+
 
 # Tilemap and tiles
-tilemap = [
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-]
-
-tiles = []
-tile_width = SCREEN_WIDTH / 16
-tile_height = SCREEN_HEIGHT / 9
-
-
-def generate_tiles(tiles):
+def generate_tiles(tilemap):
+    result = []
+    tile_width = SCREEN_WIDTH / 16
+    tile_height = SCREEN_HEIGHT / 9
     for row_idx, row in enumerate(tilemap):
         for col_idx, tile in enumerate(row):
             if tile == 1:
@@ -136,34 +174,14 @@ def generate_tiles(tiles):
                     tile_width,
                     tile_height
                 )
-                tiles.append(rect)
+                result.append(rect)
+    return result
 
 
-generate_tiles(tiles)
 
-# Main game loop
-while running:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
-
-    keys = pygame.key.get_pressed()
-    for player in players:
-        player.check_input(keys)
-        player.update(tiles)
-
-    screen.fill((0, 0, 0))
-
-    # Draw player
-    for player in players:
-        player.draw(screen)
-
-    # Draw tiles
-    for tile in tiles:
-        pygame.draw.rect(screen, (255, 255, 255), tile)
-
-
-    pygame.display.flip()
-    clock.tick(60)
+# Initialization
+pygame.init()
+game = Game()
+game.start()
 
 pygame.quit()
