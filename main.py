@@ -7,6 +7,23 @@ GRAVITY = 3
 FRICTION_FLOOR = 10
 FRICTION_AIR = 0.3
 
+
+class BodyPart:
+    def __init__(self, rect, offset) -> None:
+        self.rect = rect
+        self.visible = False
+        self.offset = offset
+
+    def draw(self, screen, color):
+        if self.visible:
+            pygame.draw.rect(screen, color, self.rect)
+
+    def update(self, anchor: pygame.Rect):
+        self.rect.x = (anchor.x + self.offset.x)
+        self.rect.y = (anchor.y + self.offset.y)
+        print(self.rect.x, self.rect.y)
+
+
 class Player:
     def __init__(self, x, y, color, left_key, right_key, jump_key, hit_key_right, hit_key_left):
         self.rect = pygame.Rect(x, y, 50, 100)
@@ -15,8 +32,15 @@ class Player:
         self.velocity = pygame.Vector2(0, 0)
         self.color = color
         self.in_air = True
-        self.punching_left = False
-        self.punching_right = False
+        hand_right = BodyPart(
+            pygame.Rect(0, 0, 40, 10),
+            pygame.Vector2(self.rect.width, self.rect.height // 2 - 5)
+        )
+        hand_left = BodyPart(
+            pygame.Rect(0, 0, 40, 10),
+            pygame.Vector2(-40, self.rect.height // 2 - 5)
+        )
+        self.body_parts = [hand_right, hand_left]
         self.left_key = left_key
         self.right_key = right_key
         self.jump_key = jump_key
@@ -25,12 +49,9 @@ class Player:
 
     def draw(self, screen):
         pygame.draw.rect(screen, self.color, self.rect)
-        if self.punching_right:
-            hand_right = pygame.Rect(self.rect.midright, (40, 10))
-            pygame.draw.rect(screen, self.color, hand_right)
-        if self.punching_left:
-            hand_left = pygame.Rect((self.rect.left - 40,  self.rect.centery), (40, 10))
-            pygame.draw.rect(screen, self.color, hand_left)
+
+        for part in self.body_parts:
+            part.draw(screen, self.color)
 
     def update(self, tiles):
         if self.in_air:
@@ -53,28 +74,30 @@ class Player:
         if abs(self.velocity.x) > self.max_velocity.x:
             self.velocity.x = math.copysign(self.max_velocity.x, self.velocity.x)
 
-        self.rect.y += self.velocity.y
-        self.rect.x += self.velocity.x
+        self.rect.y += round(self.velocity.y)
+        self.rect.x += round(self.velocity.x)
+        for part in self.body_parts:
+            part.update(self.rect)
 
-        self.rect.y -= 1
-        # boden collision
-        if self.rect.collidelistall(tiles):
-            for i in self.rect.collidelistall(tiles):
+        hit_tiles = self.rect.collidelistall(tiles)
+        if hit_tiles:
+            for i in hit_tiles:
                 tile = tiles[i]
-                if self.velocity.y > 0:
-                    if tile.top < self.rect.bottom < tile.bottom:
-                        self.in_air = False
-                        self.velocity.y = 0
-                        self.rect.bottom = tile.top
+                if self.velocity.y > 0 and self.rect.bottom <= tile.top + self.velocity.y:
+                    self.rect.bottom = tile.top
+                    self.velocity.y = 0
+                    self.in_air = False
         else:
             self.in_air = True
-        self.rect.y += 1
+
 
     def move(self, direction):
         if not self.in_air:
             self.velocity.x += direction * self.speed
 
-    def check_input(self, keys):
+    def check_input(self, keys, players):
+        enemies = [p for p in players if p is not self]
+
         if keys[self.left_key]:
             self.move(-1)
         if keys[self.right_key]:
@@ -82,21 +105,30 @@ class Player:
         if not self.in_air and keys[self.jump_key]:
             self.jump()
         if keys[self.hit_key_left]:
-            self.hit("left")
+            self.punch("left", enemies)
             keys[self.hit_key_left] = False
         if keys[self.hit_key_right]:
-            self.hit("right")
+            self.punch("right", enemies)
             keys[self.hit_key_right] = False
 
     def jump(self):
         self.velocity.y = -40
         self.in_air = True
 
-    def hit(self, direction):
+    def punch(self, direction, enemies):
         if direction == "left":
-            self.punching_left = not self.punching_left
-        if direction == "right":
-            self.punching_right = not self.punching_right
+            self.body_parts[0].visible = not self.body_parts[0].visible
+            collisions = self.body_parts[0].rect.collidelistall(enemies)
+        elif direction == "right":
+            self.body_parts[1].visible = not self.body_parts[1].visible
+            print(self.body_parts[1].visible)
+            collisions = self.body_parts[1].rect.collidelistall(enemies)
+        else:
+            raise ValueError("invalid direction")
+
+        if collisions:
+            for i in collisions:
+                enemies[i].velocity.x += 20
 
 
 class Game:
@@ -139,7 +171,7 @@ class Game:
     def update(self):
         self.delta_time = self.clock.tick(60)
         for player in self.players:
-            player.check_input(self.keys)
+            player.check_input(self.keys, self.players)
             player.update(self.tiles)
 
     def draw(self):
