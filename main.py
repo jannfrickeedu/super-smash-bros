@@ -5,7 +5,7 @@ GRAVITY = 3
 FRICTION_FLOOR = 10
 FRICTION_AIR = 0.3
 
-
+#this is a test
 class Player:
     def __init__(self, x, y, color, left_key, right_key, jump_key, hit_key_right, hit_key_left):
         self.rect = pygame.Rect(x, y, 50, 100)
