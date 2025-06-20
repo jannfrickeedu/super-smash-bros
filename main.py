@@ -5,15 +5,13 @@ GRAVITY = 3
 FRICTION_FLOOR = 10
 FRICTION_AIR = 0.3
 
-#this is a test
 class Player:
     def __init__(self, x, y, color, left_key, right_key, jump_key, hit_key_right, hit_key_left):
         self.rect = pygame.Rect(x, y, 50, 100)
         self.speed = 15
         self.max_vel_y = 20
         self.max_vel_x = 15
-        self.vy = 0
-        self.vx = 0
+        self.velocity = pygame.Vector2(0, 0)
         self.color = color
         self.in_air = True
         self.punching_left = False
@@ -35,37 +33,37 @@ class Player:
 
     def update(self, tiles):
         if self.in_air:
-            self.vy += GRAVITY
-            if self.vy >= self.max_vel_y:
+            self.velocity.y += GRAVITY
+            if self.velocity.y >= self.max_vel_y:
                 self.max_vel_y
 
-            if self.vx > 0:
-                self.vx = max(0, self.vx - FRICTION_AIR)
-            elif self.vx < 0:
-                self.vx = min(0, self.vx + FRICTION_AIR)
+            if self.velocity.x > 0:
+                self.velocity.x = max(0, self.velocity.x - FRICTION_AIR)
+            elif self.velocity.x < 0:
+                self.velocity.x = min(0, self.velocity.x + FRICTION_AIR)
 
-        elif not self.in_air and not self.vx == 0:
-            if self.vx > 0:
-                self.vx = max(0, self.vx - FRICTION_FLOOR)
-            elif self.vx < 0:
-                self.vx = min(0, self.vx + FRICTION_FLOOR)
+        elif not self.in_air and not self.velocity.x == 0:
+            if self.velocity.x > 0:
+                self.velocity.x = max(0, self.velocity.x - FRICTION_FLOOR)
+            elif self.velocity.x < 0:
+                self.velocity.x = min(0, self.velocity.x + FRICTION_FLOOR)
 
         # ist max geschwindigkeit erreicht
-        if abs(self.vx) > self.max_vel_x:
-            self.vx = math.copysign(self.max_vel_x, self.vx)
+        if abs(self.velocity.x) > self.max_vel_x:
+            self.velocity.x = math.copysign(self.max_vel_x, self.velocity.x)
 
-        self.rect.y += self.vy
-        self.rect.x += self.vx
+        self.rect.y += self.velocity.y
+        self.rect.x += self.velocity.x
 
         self.rect.y -= 1
         # boden collision
         if self.rect.collidelistall(tiles):
             for i in self.rect.collidelistall(tiles):
                 tile = tiles[i]
-                if self.vy > 0:
+                if self.velocity.y > 0:
                     if tile.top < self.rect.bottom < tile.bottom:
                         self.in_air = False
-                        self.vy = 0
+                        self.velocity.y = 0
                         self.rect.bottom = tile.top
         else:
             self.in_air = True
@@ -73,7 +71,7 @@ class Player:
 
     def move(self, direction):
         if not self.in_air:
-            self.vx += direction * self.speed
+            self.velocity.x += direction * self.speed
 
     def check_input(self, keys):
         if keys[self.left_key]:
@@ -88,7 +86,7 @@ class Player:
             self.hit("right")
 
     def jump(self):
-        self.vy = -40
+        self.velocity.y = -40
         self.in_air = True
 
     def hit(self, direction):
