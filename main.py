@@ -4,7 +4,7 @@ import math
 SCREEN_WIDTH = 1280
 SCREEN_HEIGHT = 720
 GRAVITY = 3
-FRICTION_FLOOR = 10
+FRICTION_FLOOR = 3
 FRICTION_AIR = 0.3
 
 
@@ -18,16 +18,16 @@ class BodyPart:
         if self.visible:
             pygame.draw.rect(screen, color, self.rect)
 
-    def update(self, anchor: pygame.Rect):
+    def update(self, anchor):
         self.rect.x = (anchor.x + self.offset.x)
         self.rect.y = (anchor.y + self.offset.y)
-        print(self.rect.x, self.rect.y)
 
 
 class Player:
     def __init__(self, x, y, color, left_key, right_key, jump_key, hit_key_right, hit_key_left):
         self.rect = pygame.Rect(x, y, 50, 100)
-        self.speed = 15
+        self.pos = pygame.Vector2(x, y)
+        self.speed = 10
         self.max_velocity = pygame.Vector2(15, 20)
         self.velocity = pygame.Vector2(0, 0)
         self.color = color
@@ -40,7 +40,7 @@ class Player:
             pygame.Rect(0, 0, 40, 10),
             pygame.Vector2(-40, self.rect.height // 2 - 5)
         )
-        self.body_parts = [hand_right, hand_left]
+        self.body_parts = [hand_left, hand_right]
         self.left_key = left_key
         self.right_key = right_key
         self.jump_key = jump_key
@@ -74,22 +74,26 @@ class Player:
         if abs(self.velocity.x) > self.max_velocity.x:
             self.velocity.x = math.copysign(self.max_velocity.x, self.velocity.x)
 
-        self.rect.y += round(self.velocity.y)
-        self.rect.x += round(self.velocity.x)
+        self.pos.y += self.velocity.y
+        self.pos.x += self.velocity.x
+
         for part in self.body_parts:
-            part.update(self.rect)
+            part.update(self.pos)
 
         hit_tiles = self.rect.collidelistall(tiles)
         if hit_tiles:
             for i in hit_tiles:
                 tile = tiles[i]
                 if self.velocity.y > 0 and self.rect.bottom <= tile.top + self.velocity.y:
-                    self.rect.bottom = tile.top
+                    self.pos.y = tile.top - 99
                     self.velocity.y = 0
                     self.in_air = False
         else:
             self.in_air = True
 
+
+        self.rect.x = round(self.pos.x)
+        self.rect.y = round(self.pos.y)
 
     def move(self, direction):
         if not self.in_air:
@@ -116,19 +120,21 @@ class Player:
         self.in_air = True
 
     def punch(self, direction, enemies):
+        punch_velocity = 0
         if direction == "left":
             self.body_parts[0].visible = not self.body_parts[0].visible
             collisions = self.body_parts[0].rect.collidelistall(enemies)
+            punch_velocity -= 40
         elif direction == "right":
             self.body_parts[1].visible = not self.body_parts[1].visible
-            print(self.body_parts[1].visible)
             collisions = self.body_parts[1].rect.collidelistall(enemies)
+            punch_velocity += 40
         else:
             raise ValueError("invalid direction")
 
         if collisions:
             for i in collisions:
-                enemies[i].velocity.x += 20
+                enemies[i].velocity.x += punch_velocity
 
 
 class Game:
