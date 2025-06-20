@@ -1,6 +1,10 @@
 import pygame
 import math
 
+GRAVITY = 3
+FRICTION_FLOOR = 10
+FRICTION_AIR = 0.3
+
 
 class Player:
     def __init__(self, x, y, color, left_key, right_key, jump_key, hit_key_right, hit_key_left):
@@ -31,14 +35,20 @@ class Player:
 
     def update(self, tiles):
         if self.in_air:
-            self.vy += 3  # gravity
+            self.vy += GRAVITY
             if self.vy >= self.max_vel_y:
                 self.max_vel_y
+
+            if self.vx > 0:
+                self.vx = max(0, self.vx - FRICTION_AIR)
+            elif self.vx < 0:
+                self.vx = min(0, self.vx + FRICTION_AIR)
+
         elif not self.in_air and not self.vx == 0:
             if self.vx > 0:
-                self.vx = max(0, self.vx - 10)
+                self.vx = max(0, self.vx - FRICTION_FLOOR)
             elif self.vx < 0:
-                self.vx = min(0, self.vx + 10)
+                self.vx = min(0, self.vx + FRICTION_FLOOR)
 
         # ist max geschwindigkeit erreicht
         if abs(self.vx) > self.max_vel_x:
