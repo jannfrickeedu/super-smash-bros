@@ -9,8 +9,7 @@ class Player:
     def __init__(self, x, y, color, left_key, right_key, jump_key, hit_key_right, hit_key_left):
         self.rect = pygame.Rect(x, y, 50, 100)
         self.speed = 15
-        self.max_vel_y = 20
-        self.max_vel_x = 15
+        self.max_velocity = pygame.Vector2(15, 20)
         self.velocity = pygame.Vector2(0, 0)
         self.color = color
         self.in_air = True
@@ -34,8 +33,8 @@ class Player:
     def update(self, tiles):
         if self.in_air:
             self.velocity.y += GRAVITY
-            if self.velocity.y >= self.max_vel_y:
-                self.max_vel_y
+            if self.velocity.y >= self.max_velocity.y:
+                self.max_velocity.y
 
             if self.velocity.x > 0:
                 self.velocity.x = max(0, self.velocity.x - FRICTION_AIR)
@@ -49,8 +48,8 @@ class Player:
                 self.velocity.x = min(0, self.velocity.x + FRICTION_FLOOR)
 
         # ist max geschwindigkeit erreicht
-        if abs(self.velocity.x) > self.max_vel_x:
-            self.velocity.x = math.copysign(self.max_vel_x, self.velocity.x)
+        if abs(self.velocity.x) > self.max_velocity.x:
+            self.velocity.x = math.copysign(self.max_velocity.x, self.velocity.x)
 
         self.rect.y += self.velocity.y
         self.rect.x += self.velocity.x
