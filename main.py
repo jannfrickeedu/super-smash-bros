@@ -28,7 +28,7 @@ class Player:
         self.rect = pygame.Rect(x, y, 75, 150)
         self.pos = pygame.Vector2(x, y)
         self.speed = 10
-        self.max_velocity = pygame.Vector2(15, 20)
+        self.max_velocity = pygame.Vector2(20, 20)
         self.velocity = pygame.Vector2(0, 0)
         self.color = color
         self.in_air = True
@@ -63,6 +63,8 @@ class Player:
                 self.velocity.x = max(0, self.velocity.x - FRICTION_AIR)
             elif self.velocity.x < 0:
                 self.velocity.x = min(0, self.velocity.x + FRICTION_AIR)
+
+
 
         elif not self.in_air and not self.velocity.x == 0:
             if self.velocity.x > 0:
@@ -119,6 +121,8 @@ class Player:
         self.velocity.y = -40
         self.in_air = True
 
+
+
     def punch(self, direction, enemies):
         punch_velocity = 0
         if direction == "left":
@@ -135,6 +139,7 @@ class Player:
         if collisions:
             for i in collisions:
                 enemies[i].velocity.x += punch_velocity
+                enemies[i].velocity.y -= 10
 
 
 class Game:
