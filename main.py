@@ -197,6 +197,7 @@ class Level(Scene):
         player2 = Player(800, 100, "green", pygame.K_j, pygame.K_l, pygame.K_i, pygame.K_o, pygame.K_u)
         self.players = [player1, player2]
         self.tiles = generate_tiles(tilemap)
+        self.background = pygame.image.load('background.jpg')
         
     def check_input(self, keys):
          for player in self.players:
@@ -208,7 +209,7 @@ class Level(Scene):
             player.update(self.tiles)
 
     def draw(self, screen):
-        screen.fill(0)
+        screen.blit(self.background, (0, 0))
         for player in self.players:
             player.draw(screen)
 
