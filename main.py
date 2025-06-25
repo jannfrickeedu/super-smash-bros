@@ -141,21 +141,39 @@ class Player:
 class SceneManager():
     def __init__(self, scenes) -> None:
         self.scenes = scenes
+        self.scene_index = 0
         self.current_scene = scenes[0]
+        self.current_scene.active = True
 
-    def check_input(self):
-        pass
+    def validate_scene(self):
+        if self.current_scene.active:
+            return
+        else:
+            self.scene_index += 1
+            self.current_scene = self.scenes[self.scene_index]
+            self.current_scene.active = True
+
+
+    def check_input(self, keys):
+        self.current_scene.check_input(keys)
+
+    def update(self):
+        self.validate_scene()
+        self.current_scene.update()
+
+    def draw(self, screen):
+        self.current_scene.draw(screen)
 
 
 
 class Scene(ABC):
-    def __init__(self, tilemap, active) -> None:
+    def __init__(self, tilemap) -> None:
         self.tilemap = tilemap
         self.clock = pygame.time.Clock()
-        self.active = active
+        self.active = False
 
     @abstractmethod
-    def check_input(self):
+    def check_input(self, keys):
         pass
 
     @abstractmethod
@@ -163,8 +181,35 @@ class Scene(ABC):
         self.clock.tick(60)
 
     @abstractmethod
-    def draw(self):
+    def draw(self, screen):
         pass
+
+
+class Level(Scene):
+    def __init__(self, tilemap) -> None:
+        super().__init__(tilemap)
+        player1 = Player(100, 100, "red", pygame.K_a, pygame.K_d, pygame.K_w, pygame.K_e, pygame.K_q)
+        player2 = Player(800, 100, "green", pygame.K_j, pygame.K_l, pygame.K_i, pygame.K_o, pygame.K_u)
+        self.players = [player1, player2]
+        self.tiles = generate_tiles(tilemap)
+        
+    def check_input(self, keys):
+         for player in self.players:
+            player.check_input(keys, self.players)
+
+    def update(self):
+        self.clock.tick(60)
+        for player in self.players:
+            player.update(self.tiles)
+
+    def draw(self, screen):
+        screen.fill(0)
+        for player in self.players:
+            player.draw(screen)
+
+        for tile in self.tiles:
+            pygame.draw.rect(screen, (255, 255, 255), tile)
+
 
 
 class Game:
@@ -173,12 +218,6 @@ class Game:
         self.clock = pygame.time.Clock()
         self.running = True
         self.keys = [False] * 2048
-
-        # Players setup
-        player1 = Player(100, 100, "red", pygame.K_a, pygame.K_d, pygame.K_w, pygame.K_e, pygame.K_q)
-        player2 = Player(800, 100, "green", pygame.K_j, pygame.K_l, pygame.K_i, pygame.K_o, pygame.K_u)
-        self.players = [player1, player2]
-
         # Tilemap setup
         tilemap = [
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -192,7 +231,12 @@ class Game:
             [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
         ]
 
-        self.tiles = generate_tiles(tilemap)
+        level = Level(tilemap)
+
+        scenes = [level]
+
+        self.scene_manager = SceneManager(scenes)
+
 
     def poll_events(self):
         for event in pygame.event.get():
@@ -202,23 +246,13 @@ class Game:
             if event.type == pygame.KEYDOWN or event.type == pygame.KEYUP:
                 if event.key <= 2048:
                     self.keys[event.key] = not self.keys[event.key]
-
+        self.scene_manager.check_input(self.keys)
 
     def update(self):
-        self.delta_time = self.clock.tick(60)
-        for player in self.players:
-            player.check_input(self.keys, self.players)
-            player.update(self.tiles)
+        self.scene_manager.update()
 
     def draw(self):
-        self.screen.fill(0)
-
-        for player in self.players:
-            player.draw(self.screen)
-
-        for tile in self.tiles:
-            pygame.draw.rect(self.screen, (255, 255, 255), tile)
-
+        self.scene_manager.draw(self.screen)
         pygame.display.flip()
 
     def start(self):
