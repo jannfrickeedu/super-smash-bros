@@ -25,7 +25,7 @@ class BodyPart:
 
 class Player:
     def __init__(self, x, y, color, left_key, right_key, jump_key, hit_key_right, hit_key_left):
-        self.rect = pygame.Rect(x, y, 50, 100)
+        self.rect = pygame.Rect(x, y, 75, 150)
         self.pos = pygame.Vector2(x, y)
         self.speed = 10
         self.max_velocity = pygame.Vector2(15, 20)
@@ -33,12 +33,12 @@ class Player:
         self.color = color
         self.in_air = True
         hand_right = BodyPart(
-            pygame.Rect(0, 0, 40, 10),
+            pygame.Rect(0, 0, 80, 20),
             pygame.Vector2(self.rect.width, self.rect.height // 2 - 5)
         )
         hand_left = BodyPart(
-            pygame.Rect(0, 0, 40, 10),
-            pygame.Vector2(-40, self.rect.height // 2 - 5)
+            pygame.Rect(0, 0, 80, 20),
+            pygame.Vector2(-80, self.rect.height // 2 - 5)
         )
         self.body_parts = [hand_left, hand_right]
         self.left_key = left_key
@@ -85,7 +85,7 @@ class Player:
             for i in hit_tiles:
                 tile = tiles[i]
                 if self.velocity.y > 0 and self.rect.bottom <= tile.top + self.velocity.y:
-                    self.pos.y = tile.top - 99
+                    self.pos.y = tile.top - 149
                     self.velocity.y = 0
                     self.in_air = False
         else:
