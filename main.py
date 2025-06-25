@@ -1,5 +1,6 @@
 import pygame
 import math
+from abc import ABC, abstractmethod
 
 SCREEN_WIDTH = 1280
 SCREEN_HEIGHT = 720
@@ -135,6 +136,35 @@ class Player:
         if collisions:
             for i in collisions:
                 enemies[i].velocity.x += punch_velocity
+
+
+class SceneManager():
+    def __init__(self, scenes) -> None:
+        self.scenes = scenes
+        self.current_scene = scenes[0]
+
+    def check_input(self):
+        pass
+
+
+
+class Scene(ABC):
+    def __init__(self, tilemap, active) -> None:
+        self.tilemap = tilemap
+        self.clock = pygame.time.Clock()
+        self.active = active
+
+    @abstractmethod
+    def check_input(self):
+        pass
+
+    @abstractmethod
+    def update(self):
+        self.clock.tick(60)
+
+    @abstractmethod
+    def draw(self):
+        pass
 
 
 class Game:
