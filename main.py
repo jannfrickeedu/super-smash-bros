@@ -28,7 +28,7 @@ class Player:
     def __init__(self, x, y, color, left_key, right_key, jump_key, hit_key_right, hit_key_left):
         self.rect = pygame.Rect(x, y, 75, 150)
         self.pos = pygame.Vector2(x, y)
-        self.initial_pos = self.pos
+        self.initial_pos = pygame.Vector2(x, y)
         self.speed = 10
         self.max_velocity = pygame.Vector2(20, 20)
         self.velocity = pygame.Vector2(0, 0)
@@ -72,16 +72,21 @@ class Player:
             part.update(self.pos)
 
         self.check_tile_collsions(tiles)
+        self.check_alive()
 
     def check_alive(self):
-        if self.health > 0:
-            return
-        else:
+        if self.health <= 0:
             self.reset()
+            return
+        
+        elif self.pos.y > 1000:
+            self.reset()
+            return
 
     def reset(self):
         self.pos.x = self.initial_pos.x
         self.pos.y = self.initial_pos.y
+        self.velocity = pygame.Vector2(0,0)
         self.health = 100
         self.lives -= 1
 
@@ -229,6 +234,8 @@ class Level(Scene):
         super().update()
         for player in self.players:
             player.update(self.tiles)
+            if player.lives < 0:
+                self.active = False
 
     def draw(self, screen):
         screen.blit(self.background, (0, 0))
