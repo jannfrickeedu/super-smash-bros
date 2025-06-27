@@ -9,6 +9,17 @@ FRICTION_FLOOR = 3
 FRICTION_AIR = 0.3
 
 
+class Text:
+    def __init__(self, text, font, x, y) -> None:
+        self.font = font
+        self.text = text
+        self.pos = pygame.Vector2(x, y)
+    
+    def draw(self, screen):
+        render = self.font.render(str(self.text), True, "white")
+        screen.blit(render, dest=self.pos)
+
+
 class Progressbar:
     def __init__(self, xpos, ypos, width, height, **kwargs):
         self.__width = width
@@ -61,7 +72,12 @@ class Player:
             health_bar = Progressbar(x - 100, 30, 200, 30, percent=100)
         else:
             health_bar = Progressbar(x, 30, 200, 30, percent=100)
-        self.gui = [health_bar]
+
+        pygame.font.init()
+        font = pygame.font.SysFont("Helvetica", 50)
+        lives = Text(self.lives, font, 100, 100)
+        
+        self.gui = [health_bar, lives]
         hand_right = BodyPart(
             pygame.Rect(0, 0, 80, 20),
             pygame.Vector2(self.rect.width, self.rect.height // 2 - 5)
@@ -99,6 +115,8 @@ class Player:
 
         for part in self.body_parts:
             part.update(self.pos)
+
+        self.gui[1].text = self.lives
 
         self.check_tile_collsions(tiles)
         self.check_alive()
