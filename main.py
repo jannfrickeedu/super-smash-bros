@@ -33,6 +33,8 @@ class Player:
         self.velocity = pygame.Vector2(0, 0)
         self.color = color
         self.in_air = True
+        self.health = 100
+        self.lives = 3
         hand_right = BodyPart(
             pygame.Rect(0, 0, 80, 20),
             pygame.Vector2(self.rect.width, self.rect.height // 2 - 5)
@@ -55,25 +57,10 @@ class Player:
             part.draw(screen, self.color)
 
     def update(self, tiles):
-        if self.in_air:
-            self.velocity.y += GRAVITY
-            if self.velocity.y >= self.max_velocity.y:
-                self.max_velocity.y
+        self.apply_gravity()
+        self.apply_friction()
 
-            if self.velocity.x > 0:
-                self.velocity.x = max(0, self.velocity.x - FRICTION_AIR)
-            elif self.velocity.x < 0:
-                self.velocity.x = min(0, self.velocity.x + FRICTION_AIR)
-
-
-
-        elif not self.in_air and not self.velocity.x == 0:
-            if self.velocity.x > 0:
-                self.velocity.x = max(0, self.velocity.x - FRICTION_FLOOR)
-            elif self.velocity.x < 0:
-                self.velocity.x = min(0, self.velocity.x + FRICTION_FLOOR)
-
-        # ist max geschwindigkeit erreicht
+        #max speed gets smoothly slowed and not clamped
         if abs(self.velocity.x) > self.max_velocity.x:
             self.velocity.x = math.copysign(self.max_velocity.x, self.velocity.x)
 
@@ -83,6 +70,28 @@ class Player:
         for part in self.body_parts:
             part.update(self.pos)
 
+        self.check_tile_collsions(tiles)
+
+    def apply_gravity(self):
+        if self.in_air:
+            self.velocity.y += GRAVITY
+            if self.velocity.y >= self.max_velocity.y:
+                self.max_velocity.y
+
+    def apply_friction(self):
+        if self.in_air:
+            if self.velocity.x > 0:
+                self.velocity.x = max(0, self.velocity.x - FRICTION_AIR)
+            elif self.velocity.x < 0:
+                self.velocity.x = min(0, self.velocity.x + FRICTION_AIR)
+
+        elif not self.in_air and not self.velocity.x == 0:
+            if self.velocity.x > 0:
+                self.velocity.x = max(0, self.velocity.x - FRICTION_FLOOR)
+            elif self.velocity.x < 0:
+                self.velocity.x = min(0, self.velocity.x + FRICTION_FLOOR)
+
+    def check_tile_collsions(self, tiles):
         hit_tiles = self.rect.collidelistall(tiles)
         if hit_tiles:
             for i in hit_tiles:
@@ -93,7 +102,6 @@ class Player:
                     self.in_air = False
         else:
             self.in_air = True
-
 
         self.rect.x = round(self.pos.x)
         self.rect.y = round(self.pos.y)
@@ -122,8 +130,6 @@ class Player:
         self.velocity.y = -40
         self.in_air = True
 
-
-
     def punch(self, direction, enemies):
         punch_velocity = 0
         if direction == "left":
@@ -139,8 +145,12 @@ class Player:
 
         if collisions:
             for i in collisions:
-                enemies[i].velocity.x += punch_velocity
-                enemies[i].velocity.y -= 10
+                enemies[i].hit(punch_velocity)
+
+    def hit(self, punch_velocity):
+        self.velocity.x += punch_velocity
+        self.velocity.y -= 10
+        self.health -= 10
 
 
 class SceneManager():
@@ -252,7 +262,7 @@ class Game:
         level = Level(tilemap)
         menu = Menu()
 
-        scenes = [menu, level]
+        scenes = [level, menu]
 
         self.scene_manager = SceneManager(scenes)
 
