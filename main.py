@@ -172,8 +172,7 @@ class SceneManager():
 
 
 class Scene(ABC):
-    def __init__(self, tilemap) -> None:
-        self.tilemap = tilemap
+    def __init__(self) -> None:
         self.clock = pygame.time.Clock()
         self.active = False
 
@@ -192,7 +191,7 @@ class Scene(ABC):
 
 class Level(Scene):
     def __init__(self, tilemap) -> None:
-        super().__init__(tilemap)
+        super().__init__()
         player1 = Player(100, 100, "red", pygame.K_a, pygame.K_d, pygame.K_w, pygame.K_e, pygame.K_q)
         player2 = Player(800, 100, "green", pygame.K_j, pygame.K_l, pygame.K_i, pygame.K_o, pygame.K_u)
         self.players = [player1, player2]
@@ -204,7 +203,7 @@ class Level(Scene):
             player.check_input(keys, self.players)
 
     def update(self):
-        self.clock.tick(60)
+        super().update()
         for player in self.players:
             player.update(self.tiles)
 
@@ -216,6 +215,19 @@ class Level(Scene):
         for tile in self.tiles:
             pygame.draw.rect(screen, (255, 255, 255), tile)
 
+
+class Menu(Scene):
+    def __init__(self) -> None:
+        super().__init__()
+    
+    def check_input(self, keys):
+        return super().check_input(keys)
+
+    def update(self):
+        return super().update()
+
+    def draw(self, screen):
+        screen.fill("blue")
 
 
 class Game:
@@ -238,8 +250,9 @@ class Game:
         ]
 
         level = Level(tilemap)
+        menu = Menu()
 
-        scenes = [level]
+        scenes = [menu, level]
 
         self.scene_manager = SceneManager(scenes)
 
