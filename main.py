@@ -28,6 +28,7 @@ class Player:
     def __init__(self, x, y, color, left_key, right_key, jump_key, hit_key_right, hit_key_left):
         self.rect = pygame.Rect(x, y, 75, 150)
         self.pos = pygame.Vector2(x, y)
+        self.initial_pos = self.pos
         self.speed = 10
         self.max_velocity = pygame.Vector2(20, 20)
         self.velocity = pygame.Vector2(0, 0)
@@ -71,6 +72,18 @@ class Player:
             part.update(self.pos)
 
         self.check_tile_collsions(tiles)
+
+    def check_alive(self):
+        if self.health > 0:
+            return
+        else:
+            self.reset()
+
+    def reset(self):
+        self.pos.x = self.initial_pos.x
+        self.pos.y = self.initial_pos.y
+        self.health = 100
+        self.lives -= 1
 
     def apply_gravity(self):
         if self.in_air:
