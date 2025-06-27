@@ -195,7 +195,6 @@ class Player:
         self.velocity.x += punch_velocity
         self.velocity.y -= 10
         self.health -= 10
-        print(self.health)
         self.gui[0].change_percent(self.health)
 
 
