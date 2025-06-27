@@ -10,14 +10,26 @@ FRICTION_AIR = 0.3
 
 
 class Text:
-    def __init__(self, text, font, x, y) -> None:
+    def __init__(self, text, align, font, x, y) -> None:
         self.font = font
-        self.text = text
-        self.pos = pygame.Vector2(x, y)
+        self.__text = text
+        self.render = self.font.render(str(self.text), True, "white")
+        if align == "right":
+            self.pos = pygame.Vector2(x - self.render.width, y)
+        else:
+            self.pos = pygame.Vector2(x, y)
+    
+    @property
+    def text(self):
+        return self.__text
+
+    @text.setter
+    def text(self, value):
+        self.__text = value
+        self.render = self.font.render(str(self.text), True, "white")
     
     def draw(self, screen):
-        render = self.font.render(str(self.text), True, "white")
-        screen.blit(render, dest=self.pos)
+        screen.blit(self.render, dest=self.pos)
 
 
 class Progressbar:
@@ -68,15 +80,19 @@ class Player:
         self.in_air = True
         self.health = 100
         self.lives = 3
-        if self.initial_pos.x >= SCREEN_WIDTH / 2:
-            health_bar = Progressbar(x - 100, 30, 200, 30, percent=100)
-        else:
-            health_bar = Progressbar(x, 30, 200, 30, percent=100)
 
         pygame.font.init()
         font = pygame.font.SysFont("Helvetica", 50)
-        lives = Text(self.lives, font, 100, 100)
-        
+
+        if self.initial_pos.x >= SCREEN_WIDTH / 2:
+            health_bar = Progressbar(x - 125, 30, 200, 30, percent=100)
+            font.align = pygame.FONT_RIGHT
+            lives = Text(self.lives, "right", font, SCREEN_WIDTH-30, 30)
+            
+        else:
+            health_bar = Progressbar(x, 30, 200, 30, percent=100)
+            lives = Text(self.lives, "left", font, 30, 30)
+
         self.gui = [health_bar, lives]
         hand_right = BodyPart(
             pygame.Rect(0, 0, 80, 20),
@@ -282,7 +298,7 @@ class Level(Scene):
         super().update()
         for player in self.players:
             player.update(self.tiles)
-            if player.lives < 0:
+            if player.lives <= 0:
                 self.active = False
 
     def draw(self, screen):
@@ -297,6 +313,9 @@ class Level(Scene):
 class Menu(Scene):
     def __init__(self) -> None:
         super().__init__()
+        font = pygame.font.SysFont("Helvetica", 75)
+        game_over = Text("Game Over", "left", font, 50, 100)
+        self.gui = [game_over]
     
     def check_input(self, keys):
         return super().check_input(keys)
@@ -306,6 +325,8 @@ class Menu(Scene):
 
     def draw(self, screen):
         screen.fill("blue")
+        for item in self.gui:
+            item.draw(screen)
 
 
 class Game:
