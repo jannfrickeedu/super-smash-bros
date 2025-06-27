@@ -114,6 +114,7 @@ class Player:
         self.pos.y = self.initial_pos.y
         self.velocity = pygame.Vector2(0,0)
         self.health = 100
+        self.gui[0].change_percent(100)
         self.lives -= 1
 
     def apply_gravity(self):
@@ -212,7 +213,6 @@ class SceneManager():
             self.scene_index += 1
             self.current_scene = self.scenes[self.scene_index]
             self.current_scene.active = True
-
 
     def check_input(self, keys):
         self.current_scene.check_input(keys)
