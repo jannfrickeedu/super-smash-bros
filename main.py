@@ -57,7 +57,10 @@ class Player:
         self.in_air = True
         self.health = 100
         self.lives = 3
-        health_bar = Progressbar(x, 30, 200, 30, percent=100)
+        if self.initial_pos.x >= SCREEN_WIDTH / 2:
+            health_bar = Progressbar(x - 100, 30, 200, 30, percent=100)
+        else:
+            health_bar = Progressbar(x, 30, 200, 30, percent=100)
         self.gui = [health_bar]
         hand_right = BodyPart(
             pygame.Rect(0, 0, 80, 20),
@@ -248,7 +251,7 @@ class Level(Scene):
     def __init__(self, tilemap) -> None:
         super().__init__()
         player1 = Player(100, 100, "red", pygame.K_a, pygame.K_d, pygame.K_w, pygame.K_e, pygame.K_q)
-        player2 = Player(800, 100, "green", pygame.K_j, pygame.K_l, pygame.K_i, pygame.K_o, pygame.K_u)
+        player2 = Player(SCREEN_WIDTH - 175, 100, "green", pygame.K_j, pygame.K_l, pygame.K_i, pygame.K_o, pygame.K_u)
         self.players = [player1, player2]
         self.tiles = generate_tiles(tilemap)
         self.background = pygame.image.load('background.jpg')
