@@ -9,6 +9,27 @@ FRICTION_FLOOR = 3
 FRICTION_AIR = 0.3
 
 
+class Progressbar:
+    def __init__(self, xpos, ypos, width, height, **kwargs):
+        self.__width = width
+        self.__height = height
+        self.bg_color = kwargs.get("bg_color", (100, 100, 100))
+        self.color = kwargs.get("color", (255, 255, 255))
+        self.__percent = kwargs.get("percent", 0)
+        self.__background = pygame.Rect((xpos, ypos), (width, height))
+        self.__bar = pygame.Rect((xpos, ypos), (width, height))
+        self.__bar.width = self.__width * self.__percent / 100
+
+    #function for this because of performance issues
+    def change_percent(self, new_percent):
+        self.__percent = new_percent
+        self.__bar.width = self.__width * self.__percent / 100
+
+    def draw(self, screen):
+        pygame.draw.rect(screen, self.bg_color, self.__background,)
+        pygame.draw.rect(screen, self.color, self.__bar,)
+
+
 class BodyPart:
     def __init__(self, rect, offset) -> None:
         self.rect = rect
@@ -36,6 +57,8 @@ class Player:
         self.in_air = True
         self.health = 100
         self.lives = 3
+        health_bar = Progressbar(x, 30, 200, 30, percent=100)
+        self.gui = [health_bar]
         hand_right = BodyPart(
             pygame.Rect(0, 0, 80, 20),
             pygame.Vector2(self.rect.width, self.rect.height // 2 - 5)
@@ -56,6 +79,9 @@ class Player:
 
         for part in self.body_parts:
             part.draw(screen, self.color)
+
+        for item in self.gui:
+            item.draw(screen)
 
     def update(self, tiles):
         self.apply_gravity()
@@ -169,6 +195,8 @@ class Player:
         self.velocity.x += punch_velocity
         self.velocity.y -= 10
         self.health -= 10
+        print(self.health)
+        self.gui[0].change_percent(self.health)
 
 
 class SceneManager():
