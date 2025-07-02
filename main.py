@@ -140,14 +140,18 @@ class Player:
 
     def check_alive(self):
         if self.health <= 0:
-            self.reset()
+            self.dead()
             return
         
         elif self.pos.y > 1000:
-            self.reset()
+            self.dead()
             return
 
     def reset(self):
+        self.dead()
+        self.lives = 3
+
+    def dead(self):
         self.pos.x = self.initial_pos.x
         self.pos.y = self.initial_pos.y
         self.velocity = pygame.Vector2(0,0)
@@ -249,8 +253,16 @@ class SceneManager():
             return
         else:
             self.scene_index += 1
+            if self.scene_index > (len(self.scenes) - 1):
+                self.scene_index = 0
+                self.reset_scenes()
             self.current_scene = self.scenes[self.scene_index]
             self.current_scene.active = True
+            print(self.scene_index)
+
+    def reset_scenes(self):
+        for scene in self.scenes:
+            scene.reset()
 
     def check_input(self, keys):
         self.current_scene.check_input(keys)
@@ -268,6 +280,10 @@ class Scene(ABC):
     def __init__(self) -> None:
         self.clock = pygame.time.Clock()
         self.active = False
+
+    @abstractmethod
+    def reset(self):
+        pass
 
     @abstractmethod
     def check_input(self, keys):
@@ -290,6 +306,10 @@ class Level(Scene):
         self.players = [player1, player2]
         self.tiles = generate_tiles(tilemap)
         self.background = pygame.image.load('background.jpg')
+
+    def reset(self):
+        for player in self.players:
+            player.reset()
         
     def check_input(self, keys):
          for player in self.players:
@@ -317,9 +337,14 @@ class Menu(Scene):
         font = pygame.font.SysFont("Helvetica", 75)
         game_over = Text("Game Over", "left", font, 50, 100)
         self.gui = [game_over]
+
+    def reset(self):
+        return super().reset()
     
     def check_input(self, keys):
-        return super().check_input(keys)
+        if keys[pygame.K_r]:
+            self.active = False
+            keys[pygame.K_r] = False
 
     def update(self):
         return super().update()
