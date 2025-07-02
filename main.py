@@ -1,6 +1,7 @@
-import pygame
 import math
 from abc import ABC, abstractmethod
+
+import pygame
 
 SCREEN_WIDTH = 1280
 SCREEN_HEIGHT = 720
